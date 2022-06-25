@@ -1,0 +1,126 @@
+[gd_resource type="Shader" format=2]
+
+[resource]
+code = "shader_type spatial;
+render_mode cull_back,depth_draw_alpha_prepass,skip_vertex_transform; //manual transforms
+
+uniform vec4 albedo : hint_color;
+uniform sampler2D texture_albedo : hint_albedo;
+uniform vec3 uv1_scale;
+uniform vec3 uv1_offset;
+uniform sampler2D texture_deform; // Texture is created in GDScript. Otherwise uses testdeformtexture.png for testing (remember to set \"Filter\" to OFF to work correctly)
+uniform vec2 map_dimensions;
+uniform float warp_max;
+uniform float carve_top_max;
+uniform float carve_bot_max;
+
+//Seamless randomized terrain: Every XYZ position is given its own seed, when there are two cubes side by side their touching edges share the same position, so the exact same RNG value is applied to those vertex points that are sharing the same position. Thus they will remain joined together.
+float random(vec4 st) { //Random function that takes 4 inputs (x,y,z,seed) and outputs a 0.0 - 1.0 float to be used for random).
+	return fract(sin(dot(st.xyzw,vec4(17639.7403, 4194.3491, 12.9898, 78.233)))*43758.5453123);
+}
+
+void vertex() { //Starts in Model Space
+	UV = UV*uv1_scale.xy+uv1_offset.xy;
+	float extend_pix,carveOut,warp,deform;
+	
+	VERTEX = (WORLD_MATRIX * vec4(VERTEX,1.0)).xyz; //Convert from Model Space -> World Space, world coordinates are now used.
+	
+	//The pixels in the \"texture_deform\" uniform are used as a map that tells the vertices what to do.
+	//texture_deform has two colors, Red and Green.
+	//Red 0.0 = Floor.  Red 1.0 = Wall.
+	//Green 0.0 = Fully deformed.  Green 1.0 = No deformation.
+	//The corners/edges of each individual pixel correspond to the locations of the vertices, because they too are located along the corners/edges of the 3D cubes. Or put another way: vertices are in-between pixels.
+	
+	vec2 pixel = vec2( (VERTEX.x/map_dimensions.x), (VERTEX.z/map_dimensions.y) );
+	extend_pix = 0.00001; //extend_pix is the distance used for checking beyond the corner/edge of the pixel, to find the surrounding pixel.
+	
+	vec2 pixel_ul = texture(texture_deform, vec2(pixel.x+extend_pix, pixel.y+extend_pix)).rg;
+	vec2 pixel_dl = texture(texture_deform, vec2(pixel.x+extend_pix, pixel.y-extend_pix)).rg;
+	vec2 pixel_ur = texture(texture_deform, vec2(pixel.x-extend_pix, pixel.y+extend_pix)).rg;
+	vec2 pixel_dr = texture(texture_deform, vec2(pixel.x-extend_pix, pixel.y-extend_pix)).rg;	
+	
+	//The deform value of this vertex will be set to the average of the surrounding pixels (in the texture_deform map).
+	//Both \"carving\" and \"warping\" are constructed from this \"deform\" value.
+	deform = (pixel_ur.g+pixel_ul.g+pixel_dl.g+pixel_dr.g) / 4.0;
+	
+	//Intensity of vertex RNG
+	warp = warp_max*deform;
+	
+	//Carving
+	if (VERTEX.y == 0.0) {//Checks if vertex is touching the ground. (this relates to mesh origin, which is set in Blender)
+		carveOut = 0.5 * (carve_bot_max*deform); //Amount to carve from bottom of block
+	} else {
+		carveOut = 0.5 * (carve_top_max*deform); //Amount to carve from top of block
+	}
+	bool diagonal = false;
+	bool straight = false;
+	if (pixel_ur.r == 0.0 && pixel_ul.r == 0.0 ) { //Check top pixel
+			VERTEX.z -= carveOut;
+			straight = true;
+	}
+	if (pixel_dr.r == 0.0 && pixel_dl.r == 0.0) { //Check bottom pixel
+			VERTEX.z += carveOut;
+			straight = true;
+	}
+	if (pixel_dl.r == 0.0 && pixel_ul.r == 0.0 ) { //Check left pixel
+			VERTEX.x -= carveOut;
+			straight = true;
+	}
+	if (pixel_dr.r == 0.0 && pixel_ur.r == 0.0 ) { //Check right pixel
+			VERTEX.x += carveOut;
+			straight = true;
+	}
+	
+	if (straight == false) {
+		//This vertex has been determined to not be aligned next to a floor in any 4 directions.
+		//Now check if there's any floor diagonally.
+		if (pixel_ul.r == 0.0 || pixel_dr.r == 0.0 || pixel_ur.r == 0.0 || pixel_dl.r == 0.0) {
+				diagonal = true;
+		}
+	}
+	
+	vec3 noise_pos = VERTEX;
+	//Warp (randomize vertices)
+	if (diagonal != true ) { // Diagonals will not be warped. (helps prevent clipping, coincidentally I think this might be how DK2 handles things too)
+		VERTEX.x += (0.5-random(vec4( noise_pos.xyz, 0.0 ))) * warp;
+		VERTEX.y += (0.5-random(vec4( noise_pos.xyz, 1.0 ))) * warp;
+		VERTEX.z += (0.5-random(vec4( noise_pos.xyz, 2.0 ))) * warp;
+	}
+	
+	VERTEX = (INV_CAMERA_MATRIX * vec4(VERTEX,1.0)).xyz; //Convert from World Space -> View Space
+}
+
+void fragment() {
+	vec2 base_uv = UV;
+	vec4 albedo_tex = texture(texture_albedo,base_uv);
+	
+	ALBEDO = albedo.rgb * albedo_tex.rgb;
+	ALPHA = albedo.a * albedo_tex.a;
+}
+
+void light() {
+	vec3 base_col = ALBEDO;
+	
+	//Grey
+	float grey_col = (base_col.r + base_col.g + base_col.b) / 3.0; //Has a softer appearance than the other greyscale formula.
+	//float grey_col = dot(base_col.rgb, vec3(0.2125, 0.7154, 0.0721));
+	
+	//Set color saturation to be dependant on light gradient distance
+	float color_intensity = min(1.00, ATTENUATION.r * 1.25); //*1.25 decides how much of the light gradient should be saturated //The \"min(1.00,\" prevents the saturated color from becoming over-saturated.
+	base_col = mix( vec3(grey_col), base_col, color_intensity );
+	
+	//How much Blue to apply is dependent on the value of grey_col.
+	//First value in the mix() for each RGB all added together must be 3.0
+	//Second value in the mix() is like Contrast. Lower value = flat and soft. Higher value = shiny and sharp/harsh.
+	base_col.r *= mix(0.45, 2.0, grey_col);
+	base_col.g *= mix(0.45, 2.0, grey_col);
+	base_col.b *= mix(2.10, 2.0, grey_col);
+	
+	DIFFUSE_LIGHT += ATTENUATION * base_col;
+}
+
+//If the player's camera view clips inside walls:
+//1. Increase carve_top_max and carve_bot_max so that the terrain is carved back further.
+//2. Make the wall collision box larger.
+//3. Make the player collision box larger.
+//In DK2 the collisions are actually pretty distant, you can't move up super close to a wall."

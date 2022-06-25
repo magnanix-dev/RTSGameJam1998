@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/palette.png-34e6a2820b5942f7bd38a9a1bb6eeddb.stex"
+path="res://.import/mesh_cube_vertices.png-d95f63422b9dde5d97f8e9b8174c2e4f.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/images/palette.png"
-dest_files=[ "res://.import/palette.png-34e6a2820b5942f7bd38a9a1bb6eeddb.stex" ]
+source_file="res://mesh_cube_vertices.png"
+dest_files=[ "res://.import/mesh_cube_vertices.png-d95f63422b9dde5d97f8e9b8174c2e4f.stex" ]
 
 [params]
 
@@ -20,10 +20,10 @@ compress/hdr_mode=0
 compress/bptc_ldr=0
 compress/normal_map=0
 flags/repeat=0
-flags/filter=false
+flags/filter=true
 flags/mipmaps=false
 flags/anisotropic=false
-flags/srgb=1
+flags/srgb=2
 process/fix_alpha_border=true
 process/premult_alpha=false
 process/HDR_as_SRGB=false
@@ -31,5 +31,5 @@ process/invert_color=false
 process/normal_map_invert_y=false
 stream=false
 size_limit=0
-detect_3d=false
+detect_3d=true
 svg/scale=1.0

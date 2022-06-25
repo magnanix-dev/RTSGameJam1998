@@ -2,181 +2,128 @@ extends StaticBody
 class_name Chunk
 
 const CHUNK_SIZE = 16
-const TEXTURE_SHEET_WIDTH = 8
 
-const CHUNK_LAST_INDEX = CHUNK_SIZE - 1
-const TEXTURE_TILE_SIZE = 1.0 / TEXTURE_SHEET_WIDTH
+const TEXTURE_WIDTH = 8
+const TEXTURE_TILE = 1.0 / TEXTURE_WIDTH
 
-var block_atlas = preload("res://assets/materials/material.tres")
+var position = Vector3.ZERO
+var material = null
 
-var data = {}
-var chunk_position = Vector3.ZERO
+var vertices = []
+var uvs = []
+var indices = []
 
 var _thread
 
-var world
-
 func _ready():
-	transform.origin = chunk_position * CHUNK_SIZE
-	name = str(chunk_position)
-	data = DungeonGenerator.flat(chunk_position)
+	name = "Chunk: " + str(position)
 	
-	#_generate_collider()
-	
+	build_data()	
 	_thread = Thread.new()
-	_thread.start(self, "_generate_mesh")
+	_thread.start(self, "generate_mesh")
+	_thread.wait_to_finish()
+	
+	generate_collider()
 
-func redraw():
+func regenerate():
 	for c in get_children():
 		remove_child(c)
 		c.queue_free()
-		
-	#_generate_collider()
-	_generate_mesh()
+	
+	build_data()
+	_thread.start(self, "generate_mesh")
+	_thread.wait_to_finish()
+	
+	generate_collider()
 
-func _generate_collider():
-	if data.empty():
-		_create_block_collider(Vector3.ZERO)
-		collision_layer = 0
-		collision_mask = 0
-		return
-	collision_layer = 0xFFFFF
-	collision_mask = 0xFFFFF
-	for pos in data.keys():
-		var id = data[pos]
-		if not is_block_void(id):
-			_create_block_collider(pos)
-	
-	
-func _generate_mesh():
-	if data.empty():
-		return
+func build_data():
+	vertices = []
+	uvs = []
+	indices = []
+	var pos = position * CHUNK_SIZE
+	for x in range(pos.x, pos.x+CHUNK_SIZE, 1):
+		for y in range(pos.z, pos.z+CHUNK_SIZE, 1):
+			var points = cube_points(Vector3(x, 1, y))
+			var uv_points = cube_uvs(Grid.tiles[x][y])
+			if Grid.is_void(Grid.tiles[x][y]):
+				add_face([points[4], points[5], points[6], points[7]], uv_points) #e,f,g,h
+			else:
+				add_face([points[0], points[1], points[2], points[3]], uv_points) #a,b,c,d
+				if Grid.in_grid(x+1, y) and Grid.is_void(Grid.tiles[x+1][y]):
+					add_face([points[2], points[1], points[5], points[6]], uv_points) #b,f,g,c
+				if Grid.in_grid(x-1, y) and Grid.is_void(Grid.tiles[x-1][y]):
+					add_face([points[0], points[3], points[7], points[4]], uv_points) #a,d,h,e
+				if Grid.in_grid(x, y-1) and Grid.is_void(Grid.tiles[x][y-1]):
+					add_face([points[1], points[0], points[4], points[5]], uv_points) #b,a,e,f
+				if Grid.in_grid(x, y+1) and Grid.is_void(Grid.tiles[x][y+1]):
+					add_face([points[3], points[2], points[6], points[7]], uv_points) #d,c,g,h
+
+func generate_collider():
+	for c in get_children():
+		c.create_trimesh_collision()
+
+func generate_mesh():
 	var surface = SurfaceTool.new()
 	surface.begin(Mesh.PRIMITIVE_TRIANGLES)
 	
-	for pos in data.keys():
-		var id = data[pos]
-		_draw_block_mesh(surface, pos, id)
+	for i in range(indices.size()):
+		surface.add_uv(uvs[i])
+		surface.add_vertex(vertices[indices[i]])
 	
 	surface.generate_normals()
-	#surface.generate_tangents()
+	surface.generate_tangents()
 	surface.index()
-	var arrmesh = surface.commit()
-	print(arrmesh)
-	var mesh = MeshInstance.new()
-	mesh.mesh = arrmesh
-	mesh.material_override = block_atlas
-	#mesh.create_trimesh_collision()
+	
+	var instance = MeshInstance.new()
+	instance.mesh = surface.commit()
+	instance.material_override = material
+	
+	add_child(instance)
 
-func _draw_block_mesh(surface, pos, id):
-	var verts = calculate_block_verts(pos)
-	var uvs = calculate_block_uvs(id)
-	var top_uvs = uvs
-	var bottom_uvs = uvs
+func cube_points(pos, size = 1):
+	var points = []
+	points.append(Vector3(pos.x, pos.y, pos.z)) #a
+	points.append(Vector3(pos.x+size, pos.y, pos.z)) #b
+	points.append(Vector3(pos.x+size, pos.y, pos.z+size)) #c
+	points.append(Vector3(pos.x, pos.y, pos.z+size)) #d
 	
-	if is_block_void(id):
-		_draw_block_face(surface, [verts[2], verts[0], verts[7], verts[5]], uvs)
-		_draw_block_face(surface, [verts[7], verts[5], verts[2], verts[0]], uvs)
-		_draw_block_face(surface, [verts[3], verts[1], verts[6], verts[4]], uvs)
-		_draw_block_face(surface, [verts[6], verts[4], verts[3], verts[1]], uvs)
-		return
-	
-	var o_pos = null
-	var o_id = null
-	
-	o_pos = pos + Vector3.LEFT
-	o_id = 0
-	if o_pos.x == -1:
-		o_id = world.get_block_at(o_pos+chunk_position*CHUNK_SIZE)
-	elif data.has(o_pos):
-		o_id = data[o_pos]
-	if id != o_id and is_block_void(o_id):
-		_draw_block_face(surface, [verts[2], verts[0], verts[3], verts[1]], uvs)
-	
-	o_pos = pos + Vector3.RIGHT
-	o_id = 0
-	if o_pos.x == CHUNK_SIZE:
-		o_id = world.get_block_at(o_pos+chunk_position*CHUNK_SIZE)
-	elif data.has(o_pos):
-		o_id = data[o_pos]
-	if id != o_id and is_block_void(o_id):
-		_draw_block_face(surface, [verts[7], verts[5], verts[6], verts[4]], uvs)
-	
-	o_pos = pos + Vector3.FORWARD
-	o_id = 0
-	if o_pos.z == -1:
-		o_id = world.get_block_at(o_pos+chunk_position*CHUNK_SIZE)
-	elif data.has(o_pos):
-		o_id = data[o_pos]
-	if id != o_id and is_block_void(o_id):
-		_draw_block_face(surface, [verts[6], verts[4], verts[2], verts[0]], uvs)
-	
-	o_pos = pos + Vector3.BACK
-	o_id = 0
-	if o_pos.z == CHUNK_SIZE:
-		o_id = world.get_block_at(o_pos+chunk_position*CHUNK_SIZE)
-	elif data.has(o_pos):
-		o_id = data[o_pos]
-	if id != o_id and is_block_void(o_id):
-		_draw_block_face(surface, [verts[3], verts[1], verts[7], verts[5]], uvs)
-	
-	o_pos = pos + Vector3.DOWN
-	o_id = 0
-	if o_pos.y == -1:
-		o_id = world.get_block_at(o_pos+chunk_position*CHUNK_SIZE)
-	elif data.has(o_pos):
-		o_id = data[o_pos]
-	if id != o_id and is_block_void(o_id):
-		_draw_block_face(surface, [verts[4], verts[5], verts[0], verts[1]], bottom_uvs)
-	
-	o_pos = pos + Vector3.UP
-	o_id = 0
-	if o_pos.y == CHUNK_SIZE:
-		o_id = world.get_block_at(o_pos+chunk_position*CHUNK_SIZE)
-	elif data.has(o_pos):
-		o_id = data[o_pos]
-	if id != o_id and is_block_void(o_id):
-		_draw_block_face(surface, [verts[2], verts[3], verts[6], verts[7]], top_uvs)
+	points.append(Vector3(pos.x, pos.y-size, pos.z)) #e
+	points.append(Vector3(pos.x+size, pos.y-size, pos.z)) #f
+	points.append(Vector3(pos.x+size, pos.y-size, pos.z+size)) #g
+	points.append(Vector3(pos.x, pos.y-size, pos.z+size)) #h
+	return points
 
-func _create_block_collider(position):
-	var collider = CollisionShape.new()
-	collider.shape = BoxShape.new()
-	collider.shape.extents = Vector3.ONE / 2
-	collider.transform.origin = position + Vector3.ONE / 2
-	add_child(collider)
-
-func _draw_block_face(surface, verts, uvs):
-	surface.add_uv(uvs[1]); surface.add_vertex(verts[1])
-	surface.add_uv(uvs[2]); surface.add_vertex(verts[2])
-	surface.add_uv(uvs[3]); surface.add_vertex(verts[3])
-
-	surface.add_uv(uvs[2]); surface.add_vertex(verts[2])
-	surface.add_uv(uvs[1]); surface.add_vertex(verts[1])
-	surface.add_uv(uvs[0]); surface.add_vertex(verts[0])
-
-static func calculate_block_uvs(id):
-	var row = id / TEXTURE_SHEET_WIDTH
-	var col = id % TEXTURE_SHEET_WIDTH
+func cube_uvs(id):
+	var r = id / TEXTURE_WIDTH
+	var c = id % TEXTURE_WIDTH
 	
 	return [
-		TEXTURE_TILE_SIZE * Vector2(col, row),
-		TEXTURE_TILE_SIZE * Vector2(col, row+1),
-		TEXTURE_TILE_SIZE * Vector2(col+1, row),
-		TEXTURE_TILE_SIZE * Vector2(col+1, row+1),
+		TEXTURE_TILE * Vector2(c, r),
+		TEXTURE_TILE * Vector2(c+1, r),
+		TEXTURE_TILE * Vector2(c+1, r+1),
+		TEXTURE_TILE * Vector2(c, r+1),
 	]
 
-static func calculate_block_verts(pos):
-	return [
-		Vector3(pos.x, pos.y, pos.z),
-		Vector3(pos.x, pos.y, pos.z+1),
-		Vector3(pos.x, pos.y+1, pos.z),
-		Vector3(pos.x, pos.y+1, pos.z+1),
-		Vector3(pos.x+1, pos.y, pos.z),
-		Vector3(pos.x+1, pos.y, pos.z+1),
-		Vector3(pos.x+1, pos.y+1, pos.z),
-		Vector3(pos.x+1, pos.y+1, pos.z+1),
-	]
+func add_face(verts, uv):
+	var vi1 = _add_vert(verts[0])
+	var vi2 = _add_vert(verts[1])
+	var vi3 = _add_vert(verts[2])
+	var vi4 = _add_vert(verts[3])
+	
+	uvs.append(uv[0])
+	indices.append(vi1)
+	uvs.append(uv[1])
+	indices.append(vi2)
+	uvs.append(uv[2])
+	indices.append(vi3)
+	
+	uvs.append(uv[0])
+	indices.append(vi1)
+	uvs.append(uv[2])
+	indices.append(vi3)
+	uvs.append(uv[3])
+	indices.append(vi4)
 
-static func is_block_void(id):
-	var void_ids = [0]
-	return void_ids.has(id)
+func _add_vert(vert):
+	vertices.append(vert)
+	return vertices.size()-1

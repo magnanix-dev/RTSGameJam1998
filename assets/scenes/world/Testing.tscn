@@ -1,19 +1,38 @@
-[gd_scene load_steps=3 format=2]
+[gd_scene load_steps=4 format=2]
 
 [ext_resource path="res://assets/scripts/player/Camera.gd" type="Script" id=1]
 [ext_resource path="res://assets/scripts/world/World.gd" type="Script" id=2]
+[ext_resource path="res://assets/materials/shader_material.tres" type="Material" id=3]
 
 [node name="Testing" type="Spatial"]
 
 [node name="World" type="Node" parent="."]
 script = ExtResource( 2 )
+grid_size = Vector2( 128, 128 )
+material = ExtResource( 3 )
 
 [node name="Pivot" type="Spatial" parent="."]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0 )
 script = ExtResource( 1 )
 
 [node name="Camera" type="Camera" parent="Pivot"]
-transform = Transform( 1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 8, 0 )
+transform = Transform( 1, 0, 0, 0, 0.707107, 0.707107, 0, -0.707107, 0.707107, 0, 8, 8 )
+projection = 1
+current = true
+size = 10.0
+
+[node name="OmniLight" type="OmniLight" parent="Pivot"]
+visible = false
+light_energy = 0.25
+light_indirect_energy = 0.25
+omni_range = 3.0
 
 [node name="Sun" type="DirectionalLight" parent="."]
 transform = Transform( 0.642788, 0.492404, -0.586824, 0, 0.766044, 0.642788, 0.766044, -0.413176, 0.492404, 0, 0, 0 )
+shadow_enabled = true
+shadow_color = Color( 0.501961, 0.501961, 0.501961, 1 )
+shadow_bias = -0.05
+
+[node name="Label" type="Label" parent="."]
+anchor_right = 1.0
+margin_bottom = 14.0
+align = 1
