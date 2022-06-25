@@ -34,7 +34,7 @@ theme=false
 
 [gui]
 
-theme/custom="res://default_env.tres"
+theme/custom="res://default_theme.tres"
 theme/custom_font="res://assets/fonts/18px_Daggersquare.tres"
 
 [importer_defaults]

@@ -30,6 +30,14 @@ func generate_chunks():
 			add_child(chunk)
 
 func update_chunk(location):
-	var position = Vector3(floor(location.x/Chunk.CHUNK_SIZE), floor(location.y/Chunk.CHUNK_SIZE), floor(location.z/Chunk.CHUNK_SIZE))
+	var position = floor_vec3(location/Chunk.CHUNK_SIZE)
 	if _chunks.has(position):
 		_chunks[position].regenerate()
+	var neighbours = [Vector3.FORWARD, Vector3.BACK, Vector3.LEFT, Vector3.RIGHT]
+	for n in neighbours:
+		var c_pos = floor_vec3((location+n)/Chunk.CHUNK_SIZE)
+		if position != c_pos and _chunks.has(c_pos):
+			_chunks[c_pos].regenerate()
+
+func floor_vec3(vec): 
+	return Vector3(floor(vec.x), floor(vec.y), floor(vec.z))
