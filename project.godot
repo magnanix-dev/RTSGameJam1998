@@ -9,13 +9,31 @@
 config_version=4
 
 _global_script_classes=[ {
+"base": "Resource",
+"class": "Building",
+"language": "GDScript",
+"path": "res://assets/scripts/resources/Building.gd"
+}, {
 "base": "StaticBody",
 "class": "Chunk",
 "language": "GDScript",
 "path": "res://assets/scripts/world/Chunk.gd"
+}, {
+"base": "Resource",
+"class": "Inventory",
+"language": "GDScript",
+"path": "res://assets/scripts/shared/Inventory.gd"
+}, {
+"base": "Resource",
+"class": "Item",
+"language": "GDScript",
+"path": "res://assets/scripts/resources/Item.gd"
 } ]
 _global_script_class_icons={
-"Chunk": ""
+"Building": "",
+"Chunk": "",
+"Inventory": "",
+"Item": ""
 }
 
 [application]
@@ -27,6 +45,18 @@ config/icon="res://icon.png"
 [autoload]
 
 Grid="*res://assets/scripts/global/Grid.gd"
+Items="*res://assets/scripts/global/Items.gd"
+Buildings="*res://assets/scripts/global/Buildings.gd"
+Tasks="*res://assets/scripts/global/Tasks.gd"
+
+[display]
+
+window/size/width=341
+window/size/height=256
+window/size/test_width=1024
+window/size/test_height=768
+window/stretch/mode="viewport"
+window/stretch/aspect="keep"
 
 [global]
 
@@ -35,7 +65,7 @@ theme=false
 [gui]
 
 theme/custom="res://default_theme.tres"
-theme/custom_font="res://assets/fonts/18px_Daggersquare.tres"
+theme/custom_font="res://assets/fonts/24px_Daggersquare.tres"
 
 [importer_defaults]
 
@@ -110,5 +140,6 @@ common/enable_pause_aware_picking=true
 
 [rendering]
 
+2d/snapping/use_gpu_pixel_snap=true
 threads/thread_model=2
 environment/default_environment="res://default_env.tres"

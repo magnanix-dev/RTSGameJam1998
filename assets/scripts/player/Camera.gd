@@ -1,17 +1,71 @@
 extends Spatial
 
-var speed = 16.0
-var rotate_speed = 4.0
+export var speed = 16.0
+export var rotate_speed = 4.0
 
 onready var camera = $Camera
 onready var omni = $OmniLight
+onready var hover_plane = $Hover_Plane
+onready var hover_block = $Hover_Block
 var drop_plane = null
 var mouse_grid
 var mouse_position
 
+export (PackedScene) var dig_scene
+var active_plans = []
+var inactive_plans = []
+var plan_buffer = null
+
+var filling = false
+
+func _ready():
+	omni.set_as_toplevel(true)
+	hover_plane.set_as_toplevel(true)
+	hover_block.set_as_toplevel(true)
+	prepare_plans(64)
+
+func request_plan():
+	var p = inactive_plans.pop_front()
+	active_plans.push_back(p)
+	p.visible = true
+	return p
+
+func release_plan(plan):
+	var found = null
+	for p in active_plans:
+		if p == plan:
+			found = p
+	found.visible = false
+	inactive_plans.push_back(found)
+	active_plans.erase(found)
+
+func prepare_plans(count):
+	if plan_buffer == null:
+		plan_buffer = Spatial.new()
+		add_child(plan_buffer)
+		plan_buffer.set_as_toplevel(true)
+	for i in range(count):
+		var p = dig_scene.instance()
+		p.visible = false
+		plan_buffer.add_child(p)
+		inactive_plans.push_back(p)
+
 func _unhandled_input(event):
 	if event.is_action_pressed("action_primary"):
-		dig()
+		plan_dig()
+
+func plan_dig():
+	get_mouse()
+	if Tasks.in_queue("Excavate", Vector2(mouse_grid.x, mouse_grid.z)):
+		var task = Tasks.get_queue_item("Excavate", Vector2(mouse_grid.x, mouse_grid.z))
+		if task != null:
+			release_plan(task)
+		Tasks.remove_queue_item("Excavate", Vector2(mouse_grid.x, mouse_grid.z))
+	else:
+		if Grid.in_grid(mouse_grid.x, mouse_grid.z) and not Grid.is_void(Grid.get_tile(mouse_grid.x, mouse_grid.z)):
+			var p = request_plan()
+			p.global_transform.origin = Grid.to_world(mouse_grid.x, mouse_grid.z) + Vector3.UP
+			Tasks.add_queue_item("Excavate", Vector2(mouse_grid.x, mouse_grid.z), p)
 
 func dig():
 	get_mouse()
@@ -20,7 +74,7 @@ func dig():
 
 func get_mouse():
 	if not drop_plane:
-		drop_plane = Plane(Vector3(0, 1, 0), global_transform.origin.y+0.5)
+		drop_plane = Plane(Vector3(0, 1, 0), global_transform.origin.y+1)
 	var mouse_pos = get_viewport().get_mouse_position()
 	var mouse_loc = drop_plane.intersects_ray(camera.project_ray_origin(mouse_pos), camera.project_ray_normal(mouse_pos)*100)
 	
@@ -40,5 +94,17 @@ func _physics_process(delta):
 	if direction != Vector3.ZERO:
 		transform.origin += (direction * speed) * delta
 	get_mouse()
-	omni.global_transform.origin = lerp(omni.global_transform.origin, mouse_position, speed/2 * delta)
+	if Grid.in_grid(mouse_grid.x, mouse_grid.z):
+		if Grid.is_void(Grid.tiles[mouse_grid.x][mouse_grid.z]):
+			if filling: hover_block.visible = true
+			hover_plane.visible = false
+		else:
+			hover_block.visible = false
+			if not filling:
+				hover_plane.visible = true
+			else:
+				hover_plane.visible = false
+	omni.global_transform.origin = lerp(omni.global_transform.origin, mouse_position + Vector3(0, 2, 0), speed * 2 * delta)
+	hover_plane.global_transform.origin = mouse_grid + Vector3(0, 1.1, 0)
+	hover_block.global_transform.origin = mouse_grid + Vector3(0, 0.1, 0)
 	rotate_y((Input.get_action_strength("move_left")-Input.get_action_strength("move_right")) * rotate_speed * delta)

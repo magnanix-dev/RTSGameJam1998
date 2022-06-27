@@ -18,7 +18,7 @@ var _thread
 func _ready():
 	name = "Chunk: " + str(position)
 	
-	build_data()	
+	build_data()
 	_thread = Thread.new()
 	_thread.start(self, "generate_mesh")
 	_thread.wait_to_finish()
@@ -44,7 +44,7 @@ func build_data():
 	for x in range(pos.x, pos.x+CHUNK_SIZE, 1):
 		for y in range(pos.z, pos.z+CHUNK_SIZE, 1):
 			var points = cube_points(Vector3(x, 1, y))
-			var uv_points = cube_uvs(Grid.tiles[x][y])
+			var uv_points = cube_uvs(Grid.tiles[x][y].id)
 			if Grid.is_void(Grid.tiles[x][y]):
 				add_face([points[4], points[5], points[6], points[7]], uv_points, 2, 2) #e,f,g,h
 			else:

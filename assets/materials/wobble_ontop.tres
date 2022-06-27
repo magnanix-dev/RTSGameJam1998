@@ -91,6 +91,8 @@ void vertex() { //Starts in Model Space
 		VERTEX.z += (0.5-random(vec4( noise_pos.xyz, 2.0 ))) * warp;
 	}
 	
+	VERTEX.y += 0.1;
+	
 	VERTEX = (INV_CAMERA_MATRIX * vec4(VERTEX,1.0)).xyz; //Convert from World Space -> View Space
 }
 
