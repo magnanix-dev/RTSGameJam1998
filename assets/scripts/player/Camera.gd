@@ -3,6 +3,7 @@ extends Spatial
 export var speed = 16.0
 export var rotate_speed = 4.0
 
+onready var debug_text = $Debug
 onready var camera = $Camera
 onready var omni = $OmniLight
 onready var hover_plane = $Hover_Plane
@@ -52,25 +53,31 @@ func prepare_plans(count):
 
 func _unhandled_input(event):
 	if event.is_action_pressed("action_primary"):
-		plan_dig()
+		primary_action()
 
-func plan_dig():
-	get_mouse()
-	if Tasks.in_queue("Excavate", Vector2(mouse_grid.x, mouse_grid.z)):
-		var task = Tasks.get_queue_item("Excavate", Vector2(mouse_grid.x, mouse_grid.z))
-		if task != null:
-			release_plan(task)
-		Tasks.remove_queue_item("Excavate", Vector2(mouse_grid.x, mouse_grid.z))
-	else:
-		if Grid.in_grid(mouse_grid.x, mouse_grid.z) and not Grid.is_void(Grid.get_tile(mouse_grid.x, mouse_grid.z)):
-			var p = request_plan()
-			p.global_transform.origin = Grid.to_world(mouse_grid.x, mouse_grid.z) + Vector3.UP
-			Tasks.add_queue_item("Excavate", Vector2(mouse_grid.x, mouse_grid.z), p)
-
-func dig():
+func primary_action():
 	get_mouse()
 	if Grid.in_grid(mouse_grid.x, mouse_grid.z):
-		Grid.set_tile(mouse_grid.x, mouse_grid.z, 12)
+		var tile = Grid.get_tile(mouse_grid.x, mouse_grid.z)
+		if tile.building != null:
+			if tile.building.has_method("toggle_ui"):
+				tile.building.toggle_ui()
+		else:
+			if not Grid.is_void(tile):
+				excavate(mouse_grid.x, mouse_grid.z)
+
+func excavate(x, y):
+	var vector = Vector2(x, y)
+	if Tasks.in_queue("excavate", vector):
+		var task = Tasks.get_queue_item("excavate", vector)
+		if task != null:
+			release_plan(task.reference)
+		Tasks.remove_queue_item("excavate", vector)
+	else:
+		var p = request_plan()
+		p.owner = self
+		p.global_transform.origin = Grid.to_world(x, y) + Vector3.UP
+		Tasks.add_queue_item("excavate", vector, {"reference": p, "active_agents": [], "max_agents": 2})
 
 func get_mouse():
 	if not drop_plane:
@@ -80,6 +87,13 @@ func get_mouse():
 	
 	mouse_grid = Vector3(floor(mouse_loc.x), 0, floor(mouse_loc.z))
 	mouse_position = Vector3((mouse_loc.x), 0, (mouse_loc.z))
+	debug_text.rect_position = mouse_pos + Vector2(-20, 0)
+	if Grid.in_grid(mouse_grid.x, mouse_grid.z):
+		var tile = Grid.get_tile(mouse_grid.x, mouse_grid.z)
+		if "health" in tile:
+			debug_text.text = str(tile.health)
+		else:
+			debug_text.text = ""
 
 func get_direction():
 	var forward = transform.basis.z.normalized()

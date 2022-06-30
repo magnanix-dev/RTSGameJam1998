@@ -58,7 +58,17 @@ max_energy = 0.5
 max_range = 2.5
 speed = 0.5
 
+[node name="Debug" type="Label" parent="Dynamic/Pivot"]
+margin_right = 40.0
+margin_bottom = 40.0
+rect_min_size = Vector2( 40, 40 )
+custom_fonts/font = ExtResource( 4 )
+align = 1
+valign = 1
+
 [node name="Buildings" type="Node" parent="."]
+
+[node name="Units" type="Node" parent="."]
 
 [node name="Label" type="Label" parent="."]
 anchor_right = 1.0

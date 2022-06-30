@@ -6,7 +6,7 @@
 [resource]
 script = ExtResource( 1 )
 name = "Core"
-buildable = false
+buildable = true
 size = Vector2( 3, 3 )
 cost = ""
 scene = ExtResource( 2 )

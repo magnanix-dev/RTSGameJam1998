@@ -1,8 +1,10 @@
-[gd_scene load_steps=5 format=2]
+[gd_scene load_steps=7 format=2]
 
 [ext_resource path="res://assets/materials/shader_material.tres" type="Material" id=1]
 [ext_resource path="res://assets/models/Material.material" type="Material" id=2]
 [ext_resource path="res://assets/scripts/helpers/LightPulse.gd" type="Script" id=3]
+[ext_resource path="res://assets/scripts/buildings/Core.gd" type="Script" id=4]
+[ext_resource path="res://assets/resources/units/Worker.tres" type="Resource" id=5]
 
 [sub_resource type="ArrayMesh" id=1]
 resource_name = "core_Cube"
@@ -20,6 +22,9 @@ surfaces/0 = {
 }
 
 [node name="Core" type="Spatial"]
+script = ExtResource( 4 )
+spawnable = true
+units = [ ExtResource( 5 ) ]
 
 [node name="Core" type="MeshInstance" parent="."]
 mesh = SubResource( 1 )

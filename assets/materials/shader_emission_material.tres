@@ -1,0 +1,18 @@
+[gd_resource type="ShaderMaterial" load_steps=3 format=2]
+
+[ext_resource path="res://assets/materials/wobble.tres" type="Shader" id=1]
+[ext_resource path="res://assets/images/palette.png" type="Texture" id=2]
+
+[resource]
+shader = ExtResource( 1 )
+shader_param/albedo = Color( 1, 1, 1, 1 )
+shader_param/uv1_scale = Vector3( 1, 1, 1 )
+shader_param/uv1_offset = null
+shader_param/map_dimensions = Vector2( 0, 0 )
+shader_param/warp_max = 0.125
+shader_param/carve_top_max = 0.05
+shader_param/carve_bot_max = 0.05
+shader_param/emission = null
+shader_param/emission_energy = 1.0
+shader_param/texture_albedo = ExtResource( 2 )
+shader_param/texture_emission = ExtResource( 2 )
