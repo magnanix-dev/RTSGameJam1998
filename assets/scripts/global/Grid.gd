@@ -57,7 +57,11 @@ func update_cell(x, y, tile = false, building = false):
 	set_tile(x, y, cell.tile, cell.building)
 
 func get_cell(x, y):
-	return tiles[x][y]
+	var cell = tiles[x][y]
+	if not is_instance_valid(cell.building):
+		tiles[x][y].building = null
+		cell.building = null
+	return cell
 
 func get_tile(x, y):
 	return tiles[x][y].tile
@@ -65,8 +69,8 @@ func get_tile(x, y):
 func get_building(x, y):
 	return tiles[x][y].building
 
-func to_world(x, y):
-	return Vector3(x, 0, y)
+func to_world(x, y, elevation = 0):
+	return Vector3(x, elevation, y)
 
 func convert_tile(x, y, conversion):
 	var tile = Grid.get_tile(x, y)
@@ -76,19 +80,50 @@ func convert_tile(x, y, conversion):
 	else:
 		tile.conversion -= conversion
 		if tile.conversion <= 0:
-			if Tasks.in_queue("excavate", Vector2(x, y)):
-				var task = Tasks.get_queue_item("excavate", Vector2(x, y))
+			var vector = Vector2(x, y)
+			if Tasks.in_queue("excavate", vector):
+				var task = Tasks.get_queue_item("excavate", vector)
 				if task != null:
 					if task.reference: task.reference.owner.release_plan(task.reference)
 					if task.transition: update_cell(x, y, task.transition)
-					Tasks.remove_queue_item("excavate", Vector2(x, y))
-			if Tasks.in_queue("claim", Vector2(x, y)):
-				var task = Tasks.get_queue_item("claim", Vector2(x, y))
+					if int(x) % 5 == 0 or int(y) % 5 == 0:
+						var dungeon_ground = Tiles.get("dungeon:ground")
+						var neighbours = [vector + Vector2.UP, vector + Vector2.RIGHT, vector + Vector2.DOWN, vector + Vector2.LEFT]
+						for n in neighbours:
+							if Grid.in_grid(n.x, n.y):
+								var n_tile = Grid.get_tile(n.x, n.y) 
+								var n_building = Grid.get_building(n.x, n.y) # Convert this later, add a 3rd toplevel to Grid Dictionary: Lighting
+								if n_building != null and n_tile.id == dungeon_ground.id:
+									n_building.queue_free()
+									Grid.update_cell(n.x, n.y, false, null)
+					Tasks.remove_queue_item("excavate", vector)
+					Tasks.remove_queue_item("reinforce", vector)
+					return
+			if Tasks.in_queue("claim", vector):
+				var task = Tasks.get_queue_item("claim", vector)
 				if task != null:
 					if task.transition: update_cell(x, y, task.transition)
-					Tasks.remove_queue_item("claim", Vector2(x, y))
-			if Tasks.in_queue("reinforce", Vector2(x, y)):
-				var task = Tasks.get_queue_item("reinforce", Vector2(x, y))
+					Tasks.remove_queue_item("claim", vector)
+					return
+			if Tasks.in_queue("reinforce", vector):
+				var task = Tasks.get_queue_item("reinforce", vector)
 				if task != null:
+					var dungeon_ground = Tiles.get("dungeon:ground")
+					var dungeon_torch = Buildings.get("dungeon:torch")
 					if task.transition: update_cell(x, y, task.transition)
-					Tasks.remove_queue_item("reinforce", Vector2(x, y))
+					if int(x) % 5 == 0 or int(y) % 5 == 0:
+						var neighbours = [vector + Vector2.UP, vector + Vector2.RIGHT, vector + Vector2.DOWN, vector + Vector2.LEFT]
+						var has_torch = false
+						for n in neighbours:
+							if Grid.in_grid(n.x, n.y) and not has_torch:
+								var n_tile = Grid.get_tile(n.x, n.y) 
+								var n_building = Grid.get_building(n.x, n.y) # Convert this later, add a 3rd toplevel to Grid Dictionary: Lighting
+								if n_building == null and n_tile.id == dungeon_ground.id:
+									var offset = vector + ((n - vector) * 0.5) + Vector2(0.5, 0.5)
+									var dt = dungeon_torch.scene.instance()
+									dt.transform.origin = Grid.to_world(offset.x, offset.y)
+									Global._buildings.add_child(dt)
+									Grid.update_cell(n.x, n.y, false, dt)
+									has_torch = true
+					Tasks.remove_queue_item("reinforce", vector)
+					return

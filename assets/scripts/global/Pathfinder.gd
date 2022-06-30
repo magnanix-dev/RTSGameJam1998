@@ -8,6 +8,23 @@ func _ready():
 	Grid.connect("grid_changed", self, "_get_walkable")
 	_get_walkable()
 
+func random_path(start):
+	var sector = null
+	var path = []
+	for i in range(sectors.size()):
+		if sectors[i].has(start):
+			sector = i
+	if sector != null:
+		var valid = false
+		var iterations = 0
+		while not valid and iterations < sectors[sector].size():
+			var random_index = randi() % sectors[sector].size()
+			if sectors[sector][random_index] != start:
+				path = find_path(start, sectors[sector][random_index])
+				valid = true
+			iterations += 1
+	return path
+
 func viable_path(start, end):
 	var viable = false
 	for i in range(sectors.size()):
@@ -24,7 +41,7 @@ func find_path(start, end):
 			break
 	if sector != null:
 		return astars[sector].get_point_path(point_index(start), point_index(end))
-	return null
+	return []
 
 func _get_walkable(_grid = null):
 	checked = {}

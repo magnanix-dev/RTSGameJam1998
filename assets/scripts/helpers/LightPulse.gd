@@ -1,12 +1,13 @@
 extends OmniLight
 
 export var max_energy = 5.0
-export var min_energy = 1.0
+var min_energy = 1.0
 export var max_range = 10.0
 export var min_range = 5.0
 
-export var speed_energy = 1.0
-export var speed_range = 1.0
+export var speed = 0.5
+var speed_energy = 1.0
+var speed_range = 1.0
 
 var current_energy = 0.0
 var direction_energy = 1.0
@@ -14,6 +15,9 @@ var current_range = 0.0
 var direction_range = 1.0
 
 func _ready():
+	min_energy = (min_range / max_range) * max_energy
+	speed_energy = (speed / max_energy)
+	speed_range = (speed / max_range)
 	current_energy = max_energy
 	current_range = max_range
 	light_energy = current_energy

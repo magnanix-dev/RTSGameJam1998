@@ -7,7 +7,7 @@ var facing = Vector3.ZERO
 
 func update(delta):
 	if velocity: direction = velocity
-	owner.animator["parameters/Velocity/blend_amount"] = velocity.length()
+	owner.animator["parameters/Velocity/blend_amount"] = velocity.length() / 1.25
 	if direction:
 		owner.facing = lerp(owner.facing, direction, delta * rotatespeed)
-		owner.mesh.look_at(owner.global_transform.origin - owner.facing, Vector3.UP)
+		owner.mesh.look_at(owner.transform.origin - owner.facing, Vector3.UP)

@@ -1,0 +1,13 @@
+[gd_resource type="Resource" load_steps=3 format=2]
+
+[ext_resource path="res://assets/scripts/resources/Building.gd" type="Script" id=1]
+[ext_resource path="res://assets/scenes/buildings/DungeonTorch.tscn" type="PackedScene" id=2]
+
+[resource]
+script = ExtResource( 1 )
+name = "dungeon:torch"
+buildable = true
+size = Vector2( 1, 1 )
+cost = ""
+is_walkable = true
+scene = ExtResource( 2 )

@@ -19,12 +19,13 @@ onready var states = {
 	'path': $States/Path,
 	'excavate': $States/Excavate,
 	'claim': $States/Claim,
+	'reinforce': $States/Reinforce,
 }
 
-var priority = {
-	'excavate': 5,
-	'claim': 4,
-	'reinforce': 3
+var priority = { # Lower Number = Higher Priority
+	'excavate': 0,
+	'claim': 1,
+	'reinforce': 2
 }
 
 func _ready():
@@ -36,12 +37,12 @@ func _ready():
 	Ticks.register(self)
 
 func spawn(pos):
-	global_transform.origin = pos + Vector3(0.5, 0, 0.5)
+	transform.origin = pos + Vector3(0.5, 0, 0.5)
 
 func _physics_process(delta):
-	debug_text.rect_position = get_viewport().get_camera().unproject_position(global_transform.origin) + Vector2(-512, 0)
+	debug_text.rect_position = get_viewport().get_camera().unproject_position(transform.origin) + Vector2(-512, 0)
 	var queue = str(current_task.queue).capitalize() + "..." if current_task != null else "Idling..."
-	debug_text.text = "State: " + current_state.name.capitalize() + "\nTask: " + queue# + "\n" + str(current_path)
+	debug_text.text = "Name: " + name + "\nState: " + current_state.name.capitalize()# + "\nTask: " + queue# + "\n" + str(current_path)
 	current_state.update(delta)
 
 func tick(ticks):
@@ -67,4 +68,4 @@ func _change_state(state):
 	emit_signal("state_changed", stack)
 
 func grid_location():
-	return Vector2(floor(global_transform.origin.x), floor(global_transform.origin.z))
+	return Vector2(floor(transform.origin.x), floor(transform.origin.z))

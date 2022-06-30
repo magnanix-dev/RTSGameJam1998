@@ -1,7 +1,7 @@
 extends StaticBody
 class_name Chunk
 
-const CHUNK_SIZE = 16
+const CHUNK_SIZE = 10
 
 const TEXTURE_WIDTH = 8
 const TEXTURE_TILE = 1.0 / TEXTURE_WIDTH

@@ -6,12 +6,12 @@
 [ext_resource path="res://assets/scripts/units/states/Path.gd" type="Script" id=4]
 [ext_resource path="res://assets/scripts/units/states/Excavate.gd" type="Script" id=5]
 [ext_resource path="res://assets/fonts/10px_Daggersquare.tres" type="DynamicFont" id=6]
-[ext_resource path="res://assets/scripts/helpers/LightFlicker.gd" type="Script" id=7]
 [ext_resource path="res://assets/scripts/units/states/Claim.gd" type="Script" id=8]
+[ext_resource path="res://assets/scripts/units/states/Reinforce.gd" type="Script" id=9]
 
 [sub_resource type="CapsuleShape" id=1]
-radius = 0.1
-height = 0.35
+radius = 0.2
+height = 0.15
 
 [node name="Worker" type="KinematicBody"]
 collision_layer = 2
@@ -19,7 +19,7 @@ collision_mask = 5
 script = ExtResource( 2 )
 
 [node name="Collider" type="CollisionShape" parent="."]
-transform = Transform( 1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0.275, 0 )
+transform = Transform( 1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0.3, 0 )
 shape = SubResource( 1 )
 
 [node name="Mesh" type="Spatial" parent="."]
@@ -29,15 +29,11 @@ shape = SubResource( 1 )
 [node name="OmniLight" type="OmniLight" parent="Mesh"]
 transform = Transform( -1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0.5, 0.1 )
 light_color = Color( 0.501961, 0.501961, 0.501961, 1 )
-light_energy = 0.25
-light_indirect_energy = 0.25
+light_energy = 0.1
+light_indirect_energy = 0.1
 light_specular = 0.0
-omni_range = 1.0
+omni_range = 0.75
 omni_attenuation = 2.0
-script = ExtResource( 7 )
-max_energy = 0.25
-max_range = 1.0
-speed = 0.5
 
 [node name="States" type="Node" parent="."]
 
@@ -53,7 +49,11 @@ script = ExtResource( 5 )
 [node name="Claim" type="Node" parent="States"]
 script = ExtResource( 8 )
 
+[node name="Reinforce" type="Node" parent="States"]
+script = ExtResource( 9 )
+
 [node name="Debug" type="Label" parent="."]
+visible = false
 margin_left = -512.0
 margin_right = 512.0
 margin_bottom = 32.0

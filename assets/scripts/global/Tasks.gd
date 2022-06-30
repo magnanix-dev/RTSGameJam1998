@@ -30,7 +30,6 @@ func remove_queue_item(queue, key):
 func request(location = null, caller = null):
 	if location != null: # Proximity Task Request
 		var tasks = get_relevant_tasks(location, caller)
-		tasks.sort_custom(self, "sort_distance")
 		tasks.sort_custom(self, "sort_priority")
 		return tasks
 	else: # Global Task Request
@@ -43,19 +42,15 @@ func get_relevant_tasks(location, caller = null):
 			continue
 		for i in queues[queue]:
 			var item = queues[queue][i]
-			var priority = 0
-			if "priority" in caller:
-				priority = caller.priority[queue]
-			items.append({"queue": queue, "pos": i, "distance": i.distance_to(location), "priority": priority})
+			if item.max_agents > item.active_agents.size() or item.active_agents.has(caller):
+				var priority = 1
+				if "priority" in caller:
+					priority = caller.priority[queue]
+				items.append({"queue": queue, "pos": i, "sort": (i.distance_to(location) + (priority*100.0)), "priority": priority})
 	return items
 
-func sort_distance(a, b):
-	if a.distance < b.distance:
-		return true
-	return false
-
 func sort_priority(a, b):
-	if a.priority > b.priority:
+	if a.sort < b.sort:
 		return true
 	return false
 

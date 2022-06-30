@@ -59,7 +59,6 @@ func primary_action():
 	get_mouse()
 	if Grid.in_grid(mouse_grid.x, mouse_grid.z):
 		var building = Grid.get_building(mouse_grid.x, mouse_grid.z)
-		print(building)
 		if building != null:
 			if building.has_method("toggle_ui"):
 				building.toggle_ui()
@@ -78,12 +77,12 @@ func excavate(x, y):
 	else:
 		var p = request_plan()
 		p.owner = self
-		p.global_transform.origin = Grid.to_world(x, y) + Vector3.UP
+		p.transform.origin = Grid.to_world(x, y) + Vector3.UP
 		Tasks.add_queue_item("excavate", vector, {"reference": p, "active_agents": [], "max_agents": 2, "transition": ground})
 
 func get_mouse():
 	if not drop_plane:
-		drop_plane = Plane(Vector3(0, 1, 0), global_transform.origin.y+1)
+		drop_plane = Plane(Vector3(0, 1, 0), transform.origin.y+1)
 	var mouse_pos = get_viewport().get_mouse_position()
 	var mouse_loc = drop_plane.intersects_ray(camera.project_ray_origin(mouse_pos), camera.project_ray_normal(mouse_pos)*100)
 	
@@ -120,7 +119,7 @@ func _physics_process(delta):
 				hover_plane.visible = true
 			else:
 				hover_plane.visible = false
-	omni.global_transform.origin = lerp(omni.global_transform.origin, mouse_position + Vector3(0, 2, 0), speed * 2 * delta)
-	hover_plane.global_transform.origin = mouse_grid + Vector3(0, 1.1, 0)
-	hover_block.global_transform.origin = mouse_grid + Vector3(0, 0.1, 0)
+	omni.transform.origin = lerp(omni.transform.origin, mouse_position + Vector3(0, 2, 0), speed * 2 * delta)
+	hover_plane.transform.origin = mouse_grid + Vector3(0, 1.1, 0)
+	hover_block.transform.origin = mouse_grid + Vector3(0, 0.1, 0)
 	rotate_y((Input.get_action_strength("move_left")-Input.get_action_strength("move_right")) * rotate_speed * delta)

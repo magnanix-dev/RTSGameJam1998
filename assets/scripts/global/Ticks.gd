@@ -1,6 +1,6 @@
 extends Node
 
-var tickrate = 1.0
+var tickrate = 0.55
 
 var tick = 0.0
 var ticks = 0

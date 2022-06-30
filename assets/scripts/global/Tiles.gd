@@ -9,7 +9,6 @@ func _ready():
 	
 	var filename = directory.get_next()
 	while(filename):
-		print(filename)
 		if not directory.current_is_dir():
 			tiles.append(load("res://assets/resources/tiles/%s" % filename))
 		filename = directory.get_next()

@@ -20,13 +20,15 @@ func _ready():
 	pivot.transform.origin = Vector3(floor(grid_size.x/2)+0.5, 0, floor(grid_size.y/2))
 	var wall = Tiles.get("dirt:wall")
 	var ground = Tiles.get("dirt:ground")
+	var dungeon_ground = Tiles.get("dungeon:ground")
 	Grid.initialize(grid_size.x, grid_size.y, wall)
 	var mid_x = floor(grid_size.x/2)
 	var mid_y = floor(grid_size.y/2)
-	Grid.set_region(mid_x, mid_y, 5, 5, ground)
+	Grid.connect("grid_changed", self, "update_paving")
+	Grid.connect("grid_changed", self, "update_walls")
 	Grid.set_tile(mid_x+3, mid_y, ground)
 	Grid.set_tile(mid_x-3, mid_y, ground)
-	Grid.connect("grid_changed", self, "update_paving")
+	Grid.set_region(mid_x, mid_y, 5, 5, dungeon_ground)
 	var core = core_building.scene.instance()
 	core.build(mid_x, mid_y, core_building.size)
 	_buildings.add_child(core)
@@ -61,19 +63,32 @@ func update_paving(locations):
 	for l in locations:
 		var neighbours = [l+Vector3.FORWARD, l+Vector3.BACK, l+Vector3.LEFT, l+Vector3.RIGHT]
 		var tile = Grid.get_tile(l.x, l.z)
-		if tile.id == 29: # Paved, queue neighbours if they are walkable...
+		if tile.id == dungeon_ground.id: # Paved, queue neighbours if they are walkable...
 			for n in neighbours:
 				var _tile = Grid.get_tile(n.x, n.z)
-				if _tile.id != 29 and Grid.is_walkable(n.x, n.z):
+				if _tile.id != dungeon_ground.id and Grid.is_walkable(n.x, n.z):
 					Tasks.add_queue_item("claim", Vector2(n.x, n.z), {"active_agents": [], "max_agents": 1, "transition": dungeon_ground})
 		elif Grid.is_walkable(l.x, l.z):
 			var add_task = false
 			for n in neighbours:
 				var _tile = Grid.get_tile(n.x, n.z)
-				if _tile.id == 29:
+				if _tile.id == dungeon_ground.id:
 					add_task = true
 			if add_task:
 				Tasks.add_queue_item("claim", Vector2(l.x, l.z), {"active_agents": [], "max_agents": 1, "transition": dungeon_ground})
+
+func update_walls(locations):
+	var dirt_wall = Tiles.get("dirt:wall")
+	var dungeon_wall = Tiles.get("dungeon:wall")
+	var dungeon_ground = Tiles.get("dungeon:ground")
+	for l in locations:
+		var neighbours = [l+Vector3.FORWARD, l+Vector3.BACK, l+Vector3.LEFT, l+Vector3.RIGHT]
+		var tile = Grid.get_tile(l.x, l.z)
+		if tile.id == dungeon_ground.id: # Paved, queue neighbours if they are dirt walls...
+			for n in neighbours:
+				var _tile = Grid.get_tile(n.x, n.z)
+				if _tile.id == dirt_wall.id:
+					Tasks.add_queue_item("reinforce", Vector2(n.x, n.z), {"active_agents": [], "max_agents": 1, "transition": dungeon_wall})
 
 func update_tasks():
 	label.text = Tasks.to_string()
