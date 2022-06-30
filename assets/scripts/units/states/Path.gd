@@ -38,7 +38,7 @@ func update(delta):
 
 func path_target():
 	var current = owner.current_path[path_index]
-	if not Grid.is_walkable(Grid.get_tile(current.x, current.y)):
+	if not Grid.is_walkable(current.x, current.y):
 		owner.current_path = []
 	target = Grid.to_world(current.x, current.y) + Vector3(rand_range(0.3, 0.7), 0, rand_range(0.3, 0.7))
 

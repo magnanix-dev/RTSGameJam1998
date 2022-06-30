@@ -1,26 +1,27 @@
 extends Node
 
-var items = []
+var tiles = []
 
 func _ready():
 	var directory = Directory.new()
-	directory.open("res://assets/resources/items")
+	directory.open("res://assets/resources/tiles")
 	directory.list_dir_begin()
 	
 	var filename = directory.get_next()
 	while(filename):
+		print(filename)
 		if not directory.current_is_dir():
-			items.append(load("res://assets/resources/items/%s" % filename))
+			tiles.append(load("res://assets/resources/tiles/%s" % filename))
 		filename = directory.get_next()
 
 func get(name):
-	for i in items:
+	for i in tiles:
 		if i.name == name:
 			return i
 	return null
 
-func exists(item):
-	for i in items:
-		if i == item:
+func exists(tile):
+	for i in tiles:
+		if i == tile:
 			return true
 	return false

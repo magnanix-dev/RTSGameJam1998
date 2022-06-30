@@ -34,7 +34,7 @@ func _get_walkable(_grid = null):
 	for x in range(Grid.size_x):
 		for y in range(Grid.size_y):
 			if not Vector2(x, y) in checked:
-				if Grid.is_walkable(Grid.get_tile(x, y)):
+				if Grid.is_walkable(x, y):
 					var sector = _walk_sector(Vector2(x, y), [])
 					sectors.append(sector)
 	for i in range(sectors.size()):
@@ -47,7 +47,7 @@ func _get_walkable(_grid = null):
 		for p in points:
 			astar.add_point(point_index(p), p, 1)
 		for p in points:
-			if not Grid.is_walkable(Grid.get_tile(p.x, p.y)): continue
+			if not Grid.is_walkable(p.x, p.y): continue
 			var base_index = point_index(p)
 			var neighbours = [p + Vector2.UP, p + Vector2.RIGHT, p + Vector2.DOWN, p + Vector2.LEFT]
 			for n in neighbours:
@@ -65,8 +65,8 @@ func _walk_sector(vector, sector = []):
 	var dirs = [vector + Vector2.UP, vector + Vector2.RIGHT, vector + Vector2.DOWN, vector + Vector2.LEFT]
 	for dir in dirs:
 		if not sector.has(dir):
-			if Grid.is_walkable(Grid.get_tile(dir.x, dir.y)):
+			if Grid.is_walkable(dir.x, dir.y):
 				sector = _walk_sector(dir, sector)
-			elif not Grid.is_void(Grid.get_tile(dir.x, dir.y)):
+			elif not Grid.is_void(dir.x, dir.y):
 				sector.append(dir)
 	return sector

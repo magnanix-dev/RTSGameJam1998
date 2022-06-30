@@ -13,7 +13,7 @@ func _ready():
 			buildings.append(load("res://assets/resources/buildings/%s" % filename))
 		filename = directory.get_next()
 
-func get_building(name):
+func get(name):
 	for b in buildings:
 		if b.name == name:
 			return b

@@ -7,7 +7,7 @@
 [ext_resource path="res://assets/scripts/units/states/Excavate.gd" type="Script" id=5]
 [ext_resource path="res://assets/fonts/10px_Daggersquare.tres" type="DynamicFont" id=6]
 [ext_resource path="res://assets/scripts/helpers/LightFlicker.gd" type="Script" id=7]
-[ext_resource path="res://assets/scripts/units/states/Pave.gd" type="Script" id=8]
+[ext_resource path="res://assets/scripts/units/states/Claim.gd" type="Script" id=8]
 
 [sub_resource type="CapsuleShape" id=1]
 radius = 0.1
@@ -50,7 +50,7 @@ script = ExtResource( 4 )
 [node name="Excavate" type="Node" parent="States"]
 script = ExtResource( 5 )
 
-[node name="Pave" type="Node" parent="States"]
+[node name="Claim" type="Node" parent="States"]
 script = ExtResource( 8 )
 
 [node name="Debug" type="Label" parent="."]

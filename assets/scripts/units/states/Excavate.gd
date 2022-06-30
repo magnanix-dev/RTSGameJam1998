@@ -2,7 +2,7 @@ extends "res://assets/scripts/shared/State.gd"
 
 export var rotatespeed = 5.0
 export var task_tick_rate = 1
-export var excavate_damage = 1
+export var excavate_conversion = 1
 
 var direction = Vector3.ZERO
 
@@ -19,7 +19,7 @@ func tick(ticks):
 		if owner.current_task != null:
 			if Tasks.in_queue(owner.current_task.queue, owner.current_task.pos):
 				owner.animator["parameters/Excavate/active"] = true
-				Grid.damage_tile(owner.current_task.pos.x, owner.current_task.pos.y, excavate_damage)
+				Grid.convert_tile(owner.current_task.pos.x, owner.current_task.pos.y, excavate_conversion)
 			else:
 				owner.current_task = null
 				owner.current_path = null

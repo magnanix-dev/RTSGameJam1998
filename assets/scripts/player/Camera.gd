@@ -58,15 +58,17 @@ func _unhandled_input(event):
 func primary_action():
 	get_mouse()
 	if Grid.in_grid(mouse_grid.x, mouse_grid.z):
-		var tile = Grid.get_tile(mouse_grid.x, mouse_grid.z)
-		if tile.building != null:
-			if tile.building.has_method("toggle_ui"):
-				tile.building.toggle_ui()
+		var building = Grid.get_building(mouse_grid.x, mouse_grid.z)
+		print(building)
+		if building != null:
+			if building.has_method("toggle_ui"):
+				building.toggle_ui()
 		else:
-			if not Grid.is_void(tile):
+			if not Grid.is_void(mouse_grid.x, mouse_grid.z):
 				excavate(mouse_grid.x, mouse_grid.z)
 
 func excavate(x, y):
+	var ground = Tiles.get("dirt:ground")
 	var vector = Vector2(x, y)
 	if Tasks.in_queue("excavate", vector):
 		var task = Tasks.get_queue_item("excavate", vector)
@@ -77,7 +79,7 @@ func excavate(x, y):
 		var p = request_plan()
 		p.owner = self
 		p.global_transform.origin = Grid.to_world(x, y) + Vector3.UP
-		Tasks.add_queue_item("excavate", vector, {"reference": p, "active_agents": [], "max_agents": 2})
+		Tasks.add_queue_item("excavate", vector, {"reference": p, "active_agents": [], "max_agents": 2, "transition": ground})
 
 func get_mouse():
 	if not drop_plane:
@@ -88,12 +90,12 @@ func get_mouse():
 	mouse_grid = Vector3(floor(mouse_loc.x), 0, floor(mouse_loc.z))
 	mouse_position = Vector3((mouse_loc.x), 0, (mouse_loc.z))
 	debug_text.rect_position = mouse_pos + Vector2(-20, 0)
-	if Grid.in_grid(mouse_grid.x, mouse_grid.z):
-		var tile = Grid.get_tile(mouse_grid.x, mouse_grid.z)
-		if "health" in tile:
-			debug_text.text = str(tile.health)
-		else:
-			debug_text.text = ""
+#	if Grid.in_grid(mouse_grid.x, mouse_grid.z):
+#		var tile = Grid.get_tile(mouse_grid.x, mouse_grid.z)
+#		if "conversion" in tile:
+#			debug_text.text = str(tile.conversion)
+#		else:
+#			debug_text.text = ""
 
 func get_direction():
 	var forward = transform.basis.z.normalized()
@@ -109,7 +111,7 @@ func _physics_process(delta):
 		transform.origin += (direction * speed) * delta
 	get_mouse()
 	if Grid.in_grid(mouse_grid.x, mouse_grid.z):
-		if Grid.is_void(Grid.tiles[mouse_grid.x][mouse_grid.z]):
+		if Grid.is_void(mouse_grid.x, mouse_grid.z):
 			if filling: hover_block.visible = true
 			hover_plane.visible = false
 		else:

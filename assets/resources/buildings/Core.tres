@@ -9,4 +9,5 @@ name = "Core"
 buildable = true
 size = Vector2( 3, 3 )
 cost = ""
+is_walkable = false
 scene = ExtResource( 2 )

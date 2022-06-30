@@ -104,7 +104,7 @@ func convert_cost(string):
 		i = i.trim()
 		var item = i.split(":")
 		var _new = {
-			"item": Items.get_item(str(item[1])),
+			"item": Items.get(str(item[1])),
 			"quantity": int(item[0])
 		}
 		costs.append(_new)

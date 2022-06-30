@@ -18,7 +18,13 @@ onready var states = {
 	'idle': $States/Idle,
 	'path': $States/Path,
 	'excavate': $States/Excavate,
-	'pave': $States/Pave,
+	'claim': $States/Claim,
+}
+
+var priority = {
+	'excavate': 5,
+	'claim': 4,
+	'reinforce': 3
 }
 
 func _ready():

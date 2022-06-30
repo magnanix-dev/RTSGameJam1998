@@ -26,6 +26,7 @@ func tick(ticks):
 
 func run():
 	var tasks = Tasks.request(owner.grid_location(), owner) # Proximity Task Request
+	print(tasks)
 	var fickle_check = randi() % fickle
 	var fickle_count = 0
 	for t in tasks:

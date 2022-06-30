@@ -1,0 +1,13 @@
+[gd_resource type="Resource" load_steps=2 format=2]
+
+[ext_resource path="res://assets/scripts/resources/Tile.gd" type="Script" id=1]
+
+[resource]
+script = ExtResource( 1 )
+name = "dungeon:ground"
+id = 29
+conversion = 0
+is_void = true
+is_walkable = true
+top_subdivisions = Vector2( 2, 2 )
+side_subdivisions = Vector2( 1, 1 )
